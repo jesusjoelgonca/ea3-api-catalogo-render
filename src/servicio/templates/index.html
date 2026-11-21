@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catálogo de teléfonos — EA3</title>
+<style>
+  :root { --azul:#1E4FA8; --texto:#1A2230; --claro:#E8EFF8; --rojo:#D9534F; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:Arial, Helvetica, sans-serif; color:var(--texto); background:#fff; }
+  header { padding:32px 5vw 20px; border-bottom:3px solid var(--azul); }
+  header h1 { margin:0 0 6px; font-size:26px; color:var(--azul); }
+  header p { margin:0; font-size:14px; color:#5a6578; }
+  .tarjetas { display:flex; flex-wrap:wrap; gap:14px; padding:20px 5vw; }
+  .tarjeta { flex:1 1 140px; background:var(--claro); border-radius:8px; padding:14px 16px; }
+  .tarjeta .valor { font-size:22px; font-weight:bold; color:var(--azul); }
+  .tarjeta .etiqueta { font-size:12px; color:#5a6578; margin-top:4px; }
+  section { padding:10px 5vw 30px; }
+  h2 { font-size:18px; color:var(--azul); margin:22px 0 10px; }
+  table { border-collapse:collapse; width:100%; font-size:13px; }
+  th, td { border-bottom:1px solid #dde4ee; padding:8px 10px; text-align:left; vertical-align:top; }
+  th { background:var(--claro); color:var(--azul); font-size:12px; text-transform:uppercase; letter-spacing:.03em; }
+  td.num { text-align:right; white-space:nowrap; }
+  .sin-precio { color:var(--rojo); }
+  .api { background:var(--claro); border-radius:8px; padding:16px 20px; font-size:13px; }
+  .api code { background:#fff; padding:2px 6px; border-radius:4px; font-size:12px; }
+  .api li { margin:6px 0; }
+  footer { padding:16px 5vw 40px; font-size:12px; color:#5a6578; }
+  a { color:var(--azul); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Catálogo de teléfonos inteligentes</h1>
+  <p>Servicio web construido sobre el catálogo extraído de Amazon.com en la EA1
+     (artículo principal: Samsung Galaxy A57 5G, ASIN B0GW9TVHJB).</p>
+</header>
+
+{% if resumen %}
+<div class="tarjetas">
+  <div class="tarjeta"><div class="valor">{{ resumen.productos }}</div><div class="etiqueta">Productos</div></div>
+  <div class="tarjeta"><div class="valor">{{ resumen.marcas }}</div><div class="etiqueta">Marcas</div></div>
+  <div class="tarjeta"><div class="valor">${{ "%.2f"|format(resumen.precio_promedio) }}</div><div class="etiqueta">Precio promedio (con precio)</div></div>
+  <div class="tarjeta"><div class="valor">{{ resumen.calificacion_promedio }}</div><div class="etiqueta">Calificación promedio</div></div>
+  <div class="tarjeta"><div class="valor">{{ resumen.resenas_totales }}</div><div class="etiqueta">Reseñas acumuladas</div></div>
+</div>
+{% endif %}
+
+<section>
+  <h2>Productos</h2>
+  {% if sin_precio %}<p style="font-size:12px;color:#5a6578">Un producto carece de precio porque Amazon tenía el buybox suprimido al momento de la extracción.</p>{% endif %}
+  <table>
+    <thead>
+      <tr><th>ASIN</th><th>Producto</th><th>Marca</th><th class="num">Precio</th><th class="num">Calif.</th><th class="num">Reseñas</th></tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+      <tr>
+        <td><a href="{{ p.url }}" rel="noopener">{{ p.asin }}</a></td>
+        <td>{{ p.titulo }}</td>
+        <td>{{ p.marca }}</td>
+        {% if p.precio is not none %}
+        <td class="num">${{ "%.2f"|format(p.precio) }}</td>
+        {% else %}
+        <td class="num sin-precio">—</td>
+        {% endif %}
+        <td class="num">{{ p.calificacion }}</td>
+        <td class="num">{{ p.resenas }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>API JSON</h2>
+  <div class="api">
+    <p>Los mismos datos están disponibles en JSON para su reutilización:</p>
+    <ul>
+      <li><code>GET /api/productos</code> — catálogo completo; admite
+        <code>?marca=Samsung</code>, <code>?q=galaxy</code>,
+        <code>?min_precio=300&amp;max_precio=800</code> y
+        <code>?orden=precio_asc|precio_desc|calificacion|resenas|nombre</code>.</li>
+      <li><code>GET /api/productos/B0GW9TVHJB</code> — un producto por ASIN.</li>
+      <li><code>GET /api/metricas</code> — resumen del mercado, agregados por marca,
+        distribución por tramo de precio y top de calificación.</li>
+      <li><code>GET /healthz</code> — estado del servicio y versión desplegada.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  EA3 · Programación para Análisis de Datos (PREICA2602B020048) · Jesus Gonzalez ·
+  versión desplegada: <code>{{ revision }}</code>
+</footer>
+</body>
+</html>
