@@ -1,0 +1,25 @@
+# Entornos y caché
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.env
+
+# Construcciones
+/build/
+/dist/
+
+# Documentos del informe: se entregan por la plataforma, no por el repositorio
+docs/
+
+# Salida del generador del panel: se construye en el despliegue
+/site/
+data/_prueba_temporal.csv
+
+# Material de trabajo local: no forma parte de la entrega
+_local/
+
+# Sistema
+Thumbs.db
+.DS_Store
