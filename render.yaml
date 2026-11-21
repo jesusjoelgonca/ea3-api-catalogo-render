@@ -1,0 +1,14 @@
+# Blueprint de Render: crea el servicio web con una sola acción desde el
+# panel (New + Blueprint) apuntando a este repositorio.
+services:
+  - type: web
+    name: ea3-catalogo-api
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn wsgi:app --workers 2 --threads 4 --bind 0.0.0.0:$PORT
+    healthCheckPath: /healthz
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
