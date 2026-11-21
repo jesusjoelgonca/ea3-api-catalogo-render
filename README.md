@@ -67,6 +67,7 @@ python -m unittest discover -s tests -v
 
 ```
 EA3/
+├── Gonzalez_Jesus_Automatizando_EA3.ipynb   # cuaderno ejecutado (evidencia)
 ├── wsgi.py                    # punto de entrada de gunicorn / flask
 ├── render.yaml                # blueprint del servicio en Render
 ├── requirements.txt           # flask + gunicorn
@@ -115,5 +116,8 @@ Actions):
 
 ## Estado
 
-En construcción: el código y los flujos están listos; el despliegue en Render
-y las secciones finales del README se completan con la publicación.
+Operativo. El servicio responde en Render con el catálogo completo, la rama
+`main` exige los cuatro trabajos de CI en verde antes de fusionar, y cada
+fusión queda verificada por el flujo de CD contra el SHA publicado. El
+cuaderno `Gonzalez_Jesus_Automatizando_EA3.ipynb` reproduce la cadena completa:
+catálogo, API en pruebas, flujos de Actions y verificación del servicio vivo.
