@@ -1,0 +1,62 @@
+name: CD
+
+# Despliegue continuo hacia Render. Render recibe el push a main y construye
+# el servicio por sí mismo (autoDeploy); este flujo dispara además el deploy
+# hook si está configurado, y luego verifica que la versión publicada sea
+# exactamente la de este commit: /healthz devuelve el SHA de Render, que debe
+# coincidir con el SHA que GitHub acaba de desplegar.
+#
+# Variables y secretos del repositorio (Settings → Secrets and variables):
+#   Variable RENDER_URL          — URL pública del servicio, sin / final.
+#   Secreto  RENDER_DEPLOY_HOOK  — opcional; URL del deploy hook de Render.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Un despliegue a la vez: si llegan dos pushes seguidos, el primero se cancela.
+concurrency:
+  group: render
+  cancel-in-progress: true
+
+jobs:
+  desplegar:
+    name: Publicar en Render y verificar
+    runs-on: ubuntu-latest
+    env:
+      RENDER_URL: ${{ vars.RENDER_URL }}
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+    steps:
+      - name: Disparar el despliegue por el hook (si está configurado)
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          echo "Disparando el despliegue en Render..."
+          curl -sf -X POST "$RENDER_DEPLOY_HOOK" > /dev/null
+
+      - name: Verificar que la versión publicada coincide con este commit
+        if: ${{ env.RENDER_URL != '' }}
+        run: |
+          SALUD="${RENDER_URL%/}/healthz"
+          echo "Consultando $SALUD hasta ver el commit $GITHUB_SHA..."
+          for intento in $(seq 1 60); do
+            RESPUESTA=$(curl -sf "$SALUD" || true)
+            REVISION=$(printf '%s' "$RESPUESTA" | python3 -c \
+              'import sys, json; print(json.load(sys.stdin).get("revision", ""))' \
+              2>/dev/null || true)
+            if [ -n "$REVISION" ] && [ "$REVISION" = "$(echo "$GITHUB_SHA" | cut -c1-7)" ]; then
+              echo "Despliegue verificado: revision=$REVISION (intento $intento)."
+              exit 0
+            fi
+            echo "Intento $intento: revision=${REVISION:-sin respuesta}; esperando..."
+            sleep 8
+          done
+          echo "::error::El servicio no reportó este commit tras 8 minutos."
+          exit 1
+
+      - name: Aviso si el servicio aún no está configurado
+        if: ${{ env.RENDER_URL == '' }}
+        run: |
+          echo "::warning::La variable RENDER_URL no está configurada; se omite la verificación del despliegue."
